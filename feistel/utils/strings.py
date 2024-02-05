@@ -20,9 +20,16 @@ def extract(from_str: str, start_index: int, desired_length: int) -> str:
     return repeated[start_index : start_index + desired_length]
 
 
-def split(string: str) -> list[str]:
+def split(string: str) -> tuple[str, str]:
     """
     Splits a string in two parts, the first part being one character shorter in case the passed item has odd length
     """
     half = int(len(string) / 2)
-    return [string[:half], string[half:]]
+    return (string[:half], string[half:])
+
+
+def string2bytearray(string: str, encoding="utf-8") -> bytearray:
+    """
+    Transforms the passed string to a byte array with default encoding as `utf-8`)
+    """
+    return bytearray(str.encode(string, encoding))
