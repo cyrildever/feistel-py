@@ -1,13 +1,13 @@
 # feistel-py
-_Feistel cipher implementation in Golang for format-preserving encryption_
+_Feistel cipher implementation in Python for format-preserving encryption_
 
 
-![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/cyrildever/feistel)
-![GitHub last commit](https://img.shields.io/github/last-commit/cyrildever/feistel)
-![GitHub issues](https://img.shields.io/github/issues/cyrildever/feistel)
-![GitHub license](https://img.shields.io/github/license/cyrildever/feistel)
+![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/cyrildever/feistel-py)
+![GitHub last commit](https://img.shields.io/github/last-commit/cyrildever/feistel-py)
+![GitHub issues](https://img.shields.io/github/issues/cyrildever/feistel-py)
+![GitHub license](https://img.shields.io/github/license/cyrildever/feistel-py)
 
-This is a Golang library implementing the Feistel cipher for Format-Preserving Encryption (FPE).
+This is a Python library implementing the Feistel cipher for Format-Preserving Encryption (FPE).
 
 ### Motivation
 
