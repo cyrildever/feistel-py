@@ -4,17 +4,15 @@ from feistel.utils.strings import add, extract, split, string2bytearray
 from feistel.utils.xor import xor
 
 
-class Cipher:
-    def __init__(self, key: str, rounds: int):
+class CustomCipher:
+    def __init__(self, keys: list[str]):
         """
-        The Cipher class is the main entry point to the Feistel cipher if you want to use the SHA-256 hash function at each round.
-        You should instantiate it with the base key you want to use and the number of rounds to apply.
-        For better security, you should choose a 256-bit key or longer, and 10 rounds is a good start.
-        Once instantiated, use the encrypt() or decrypt() methods on the Cipher instance with the appropriate data.
+        The CustomCipher uses custom keys instead of the SHA-256 hashing function to provide a new key at each round.
+        The number of rounds is then determined by the number of keys provided.
+        NB: There must be at least two keys.
         """
-        assert key and rounds > 2, "CipherError: wrong arguments"
-        self.key = key
-        self.rounds = rounds
+        assert len(keys) >= 2, "CustomCipherError: wrong arguments"
+        self.keys = keys
 
     def encrypt(self, data: str) -> bytearray:
         """
@@ -32,7 +30,7 @@ class Cipher:
             raise Exception("invalid string: unable to split")
 
         parts = [left, right]
-        for i in range(0, self.rounds):
+        for i in range(0, len(self.keys)):
             tmp = xor(parts[0], self._round(parts[1], i))
             parts = [parts[1], tmp]
 
@@ -50,14 +48,14 @@ class Cipher:
 
         # Apply the balanced Feistel cipher
         b, a = split(o)
-        for i in range(0, self.rounds):
-            tmp = xor(a, self._round(b, self.rounds - i - 1))
+        for i in range(0, len(self.keys)):
+            tmp = xor(a, self._round(b, len(self.keys) - i - 1))
             a = b
             b = tmp
 
         return unpad(b + a)
 
     def _round(self, item: str, idx: int) -> str:
-        addition = add(item, extract(self.key, idx, len(item)))
+        addition = add(item, extract(self.keys[idx], idx, len(item)))
         hex_hashed = hash(string2bytearray(addition)).hex()
         return extract(hex_hashed, idx, len(item))
