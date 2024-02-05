@@ -23,7 +23,9 @@ keywords = [
     "encryption",
     "fpe",
 ]
-dependencies = []
+dependencies = [
+    "pycryptodome >= 3.20.0",
+]
 requires-python = ">=3.10.2"
 
 [project.urls]
