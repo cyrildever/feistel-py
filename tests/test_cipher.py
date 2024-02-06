@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from feistel.cipher import Cipher
+from src.feistel.cipher import Cipher
 
 
 class TestCipher(TestCase):
@@ -18,5 +18,9 @@ class TestCipher(TestCase):
             "8ed9dcc1701c064f0fd7ae235f15143f989920e0ee9658bb7882c8d7d5f05692", 10
         )
         obfuscated = bytearray.fromhex("3d7c0a0f51415a521054")
+        found = cipher.decrypt(obfuscated)
+        self.assertEqual(found, expected)
+
+        obfuscated = b"=|\n\x0fQAZR\x10T"
         found = cipher.decrypt(obfuscated)
         self.assertEqual(found, expected)

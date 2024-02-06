@@ -1,7 +1,7 @@
 from unittest import TestCase
 
 
-from feistel.utils.base256 import (
+from src.feistel.utils.base256 import (
     base256_char_at,
     hex2Readable,
     index_of_base256,
@@ -9,10 +9,10 @@ from feistel.utils.base256 import (
     readable2hex,
     to_base256_readable,
 )
-from feistel.utils.hash import BLAKE2B, H, KECCAK, SHA_256, SHA_3
-from feistel.utils.padding import pad, unpad
-from feistel.utils.strings import add, extract, split
-from feistel.utils.xor import xor
+from src.feistel.utils.hash import BLAKE2B, H, KECCAK, SHA_256, SHA_3
+from src.feistel.utils.padding import pad, unpad
+from src.feistel.utils.strings import add, extract, split
+from src.feistel.utils.xor import xor
 
 
 class TestUtilsBase259(TestCase):

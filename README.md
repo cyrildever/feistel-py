@@ -40,12 +40,88 @@ There is no restriction on the ![$F$](https://render.githubusercontent.com/rende
 pip install feistel-py
 ```
 
-// TODO
+To get an obfuscated string from a source data using the SHA-256 hashing function at each round, first instantiate a `Cipher` object, passing it a key and a number of rounds. Then, use the `encrypt()` method with the source data as argument. The result will be a byte array. To ensure maximum security, I recommend you use a 256-bit key or longer and a minimum of 10 rounds.
+
+The decryption process uses the obfuscated buffered data and pass it to the `decrypt()` method of the `Cipher`.
+
+```python
+from feistel.cipher import Cipher
+
+
+source = "my-source-data"
+
+# Encrypt
+cipher = Cipher("some-32-byte-long-key-to-be-safe", 10)
+obfuscated = cipher.encrypt(source)
+
+# Decrypt
+deciphered = cipher.decrypt(obfuscated)
+
+assert deciphered == source, "deciphered should be 'my-source-data'"
+```
+_NB: This is the exact replica of my other implementations (see below)._
+
+You may also use your own set of keys through a `CustomCipher` instance, eg.
+```python
+from feistel.custom import CustomCipher
+
+
+keys = [
+    "1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "9876543210fedcba9876543210fedcba9876543210fedcba9876543210fedcba",
+    "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789",
+]
+cipher = CustomCipher(keys)
+```
+In that case, the number of rounds depends on the number of provided keys.
+
+Finally, you might want to use the latest cipher, providing true format-preserving encryption for strings:
+```python
+from feistel.fpe import FPECipher
+from feistel.utils.hash import SHA_256
+
+
+cipher = FPECipher(SHA_256, "some-32-byte-long-key-to-be-safe", 128)
+obfuscated = cipher.encrypt(source)
+
+assert len(obfuscated) == len(source)
+```
+_NB: For stability and security purposes, the number `0` always returns itself._
+
+
+You might also want to use it with the command line:
+```
+usage: python3 -m feistel [-h] [-c CIPHER] [-e ENGINE] [-k KEY] [-r ROUNDS] [-o OPERATION] input
+
+positional arguments:
+  input                 The string to obfuscate (watch for quotes)
+
+options:
+  -h, --help            show this help message and exit
+  -c CIPHER, --cipher CIPHER
+                        The type of cipher: feistel [default] | custom | fpe
+  -e ENGINE, --engine ENGINE
+                        The hashing engine [default sha-256]
+  -k KEY, --key KEY     The key(s) to use
+  -r ROUNDS, --rounds ROUNDS
+                        The (optional) number of rounds [default 10]
+  -o OPERATION, --operation OPERATION
+                        The operation to process : cipher | decipher
+```
 
 
 ### Dependencies
 
-// TODO
+The following libraries are necessary:
+- `pycryptodome`;
+- `py-utls`.
+
+
+### Tests
+
+```console
+$ python3 -m unittest discover
+```
 
 
 ### Other implementations
