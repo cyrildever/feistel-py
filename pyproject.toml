@@ -1,0 +1,36 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=58.1.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "feistel-py"
+version = "0.1.0"
+description = "Feistel cipher implementation in Python for format-preserving encryption"
+readme = "README.md"
+authors = [{ name = "Cyril Dever", email = "cdever@pep-s.com" }]
+license = { file = "LICENSE" }
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+keywords = [
+    "feistel",
+    "cipher",
+    "format-preserving",
+    "encryption",
+    "fpe",
+]
+dependencies = [
+    "pycryptodome >= 3.20.0",
+    "py-utls >= 0.1.6",
+]
+requires-python = ">=3.10.2"
+
+[project.urls]
+Homepage = "https://github.com/cyrildever/feistel-py"
+
+[project.scripts]
+feistel-py = "feistel.__main__:main"
