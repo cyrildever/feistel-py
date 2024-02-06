@@ -12,7 +12,7 @@ class Cipher:
         For better security, you should choose a 256-bit key or longer, and 10 rounds is a good start.
         Once instantiated, use the encrypt() or decrypt() methods on the Cipher instance with the appropriate data.
         """
-        assert key and rounds > 2, "CipherError: wrong arguments"
+        assert key and rounds >= 2, "CipherError: wrong arguments"
         self.key = key
         self.rounds = rounds
 

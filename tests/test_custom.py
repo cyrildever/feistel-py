@@ -3,7 +3,7 @@ from unittest import TestCase
 from feistel.custom import CustomCipher
 
 
-class TestCustomipher(TestCase):
+class TestCustomCipher(TestCase):
     def test_encrypt(self):
         expected = "3d7c0a0f51415a521054"
         cipher = CustomCipher(

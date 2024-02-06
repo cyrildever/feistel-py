@@ -16,11 +16,11 @@ def to_base256_readable(item: bytearray) -> Readable:
 
 
 def hex2Readable(hex: str) -> Readable:
-    return to_base256_readable(bytes.fromhex(hex))
+    return to_base256_readable(bytearray.fromhex(hex))
 
 
 def readable2bytearray(readable: Readable) -> bytearray:
-    return bytes(list(map(index_of_base256, readable)))
+    return bytearray(list(map(index_of_base256, readable)))
 
 
 def readable2hex(readable: Readable) -> str:

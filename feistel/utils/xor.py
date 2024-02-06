@@ -1,4 +1,4 @@
-NEUTRAL = bytearray([0])
+NEUTRAL = bytearray([0]).decode("utf-8")
 
 
 def xor(str1: str, str2: str) -> str:
