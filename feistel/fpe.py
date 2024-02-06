@@ -1,7 +1,9 @@
+import math
 from feistel.utils.base256 import Readable, readable2bytearray, to_base256_readable
+from feistel.utils.bytearray import add_bytes, bytearray2ints, split_bytes
 from feistel.utils.hash import Engine, H, is_available_engine
 from feistel.utils.strings import add, extract, split, string2bytearray
-from feistel.utils.xor import NEUTRAL, xor
+from feistel.utils.xor import NEUTRAL, NEUTRAL_BYTES, xor, xor_bytes
 
 
 class FPECipher:
@@ -17,7 +19,6 @@ class FPECipher:
             is_available_engine(engine) and key and rounds >= 2
         ), "FPECipherError: wrong arguments"
         self.engine = engine
-        # self.key = "".join([chr(x) for x in bytearray.fromhex(key)])
         self.key = key
         self.rounds = rounds
 
@@ -46,6 +47,45 @@ class FPECipher:
             parts = [left, right]
 
         return to_base256_readable(string2bytearray("".join(parts)))
+
+    def encrypt_number(self, n: int) -> int:
+        """
+        Obfuscate numbers
+        """
+        if n < 128:
+            if n == 0:
+                return 0
+            b = n.to_bytes(2, "big")
+            string = b.decode()
+            return int.from_bytes(readable2bytearray(self.encrypt(string)), "big")
+
+        bits = 8 if math.ceil(math.log2(n) / 8) > 4 else 4
+        buf = n.to_bytes(bits, "big")
+        parts = split_bytes(buf)
+        # Apply the FPE Feistel cipher
+        for i in range(0, self.rounds):
+            left = parts[1]
+            if len(parts[1]) < len(parts[0]):
+                parts[1].extend(NEUTRAL_BYTES)
+            rnd = self._round_bytes(parts[1], i)
+            tmp = parts[0]
+            crop = False
+            if len(tmp) + 1 == len(rnd):
+                tmp.extend(NEUTRAL_BYTES)
+                crop = True
+            right = xor_bytes(tmp, rnd)
+            if crop:
+                right = right[: len(right) - 1]
+            parts = [left, right]
+
+        b = parts[0] + parts[1]
+        return int.from_bytes(b, "big")
+
+    def encrypt_string(self, string: str) -> Readable:
+        """
+        Obfuscate strings
+        """
+        return self.encrypt(string)
 
     def decrypt(self, obfuscated: Readable) -> str:
         """
@@ -78,7 +118,51 @@ class FPECipher:
 
         return left + right
 
+    def decrypt_number(self, obfuscated: int) -> int:
+        """
+        Deobfuscate numbers
+        """
+        if obfuscated == 0:
+            return 0
+        size = math.ceil(math.log2(obfuscated) / 8)
+        if size > 4:
+            buf = obfuscated.to_bytes(8, "big")
+        elif size > 2:
+            buf = obfuscated.to_bytes(4, "big")
+        else:
+            buf = obfuscated.to_bytes(2, "big")
+
+        # Apply FPE Feistel cipher
+        left, right = split_bytes(buf)
+        if self.rounds % 2 != 0 and len(left) != len(right):
+            left.extend([right[0]])
+            right = right[1:]
+        for i in range(0, self.rounds):
+            leftRound = left
+            if len(left) < len(right):
+                leftRound.extend(NEUTRAL_BYTES)
+            rnd = self._round_bytes(leftRound, self.rounds - i - 1)
+            rightRound = right
+            extended = False
+            if len(rightRound) + 1 == len(rnd):
+                rightRound.extend(left[len(left) - 1])
+                extended = True
+            tmp = xor_bytes(rightRound, rnd)
+            right = left
+            if extended:
+                tmp = tmp[: len(tmp) - 1]
+            left = tmp
+
+        b = left + right
+        return int.from_bytes(b, "big")
+
     def _round(self, item: str, idx: int) -> str:
         addition = add(item, extract(self.key, idx, len(item)))
         hex_hashed = H(string2bytearray(addition), self.engine).hex()
         return extract(hex_hashed, idx, len(item))
+
+    def _round_bytes(self, item: bytearray, idx: int) -> bytearray:
+        addition = add_bytes(item, string2bytearray(extract(self.key, idx, len(item))))
+        hashed = H(addition, self.engine)
+        extracted = extract(hashed.hex(), idx, len(item))
+        return string2bytearray(extracted)

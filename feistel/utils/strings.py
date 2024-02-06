@@ -2,9 +2,9 @@ def add(str1: str, str2: str) -> str:
     """
     Adds two strings in the sense that each charCode are added
     """
-    if len(str1) != len(str2):
-        raise Exception("to be added, strings must be of the same length")
-
+    assert len(str1) == len(
+        str2
+    ), "Error: to be added, strings must be of the same length"
     return "".join([chr(ord(c) + ord(str2[idx])) for idx, c in enumerate(str1)])
 
 

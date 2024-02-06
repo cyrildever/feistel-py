@@ -16,6 +16,23 @@ class TestFPECipher(TestCase):
         found = cipher.encrypt("Edgewhere")
         self.assertEqual(found, expected)
 
+    def test_encrypt_number(self):
+        expected = 22780178
+        cipher = FPECipher(SHA_256, "some-32-byte-long-key-to-be-safe", 128)
+        found = cipher.encrypt_number(123456789)
+        self.assertEqual(found, expected)
+
+        smallNumber = cipher.encrypt_number(123)
+        self.assertEqual(smallNumber, 24359)
+
+        zero = cipher.encrypt_number(0)
+        self.assertEqual(zero, 0)
+
+        veryLargeNumber = cipher.encrypt_number(
+            18446744073709551615
+        )  # Max 64-bit unsigned int in Python and uint64 in Golang
+        self.assertEqual(veryLargeNumber, 17630367666640955566)
+
     def test_decrypt(self):
         nonFPE = "Edgewhere"
         cipher = FPECipher(
@@ -41,3 +58,18 @@ class TestFPECipher(TestCase):
         )
         blake2 = cipher.decrypt(fromBlake2)
         self.assertEqual(blake2, expected)
+
+    def test_decrypt_number(self):
+        expected = 123456789
+        cipher = FPECipher(SHA_256, "some-32-byte-long-key-to-be-safe", 128)
+        found = cipher.decrypt_number(22780178)
+        self.assertEqual(found, expected)
+
+        smallNumber = cipher.decrypt_number(24359)
+        self.assertEqual(smallNumber, 123)
+
+        zero = cipher.decrypt_number(0)
+        self.assertEqual(zero, 0)
+
+        veryLargeNumber = cipher.decrypt_number(17630367666640955566)
+        self.assertEqual(veryLargeNumber, 18446744073709551615)
