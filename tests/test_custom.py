@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from src.feistel.custom import CustomCipher
+from feistel.custom import CustomCipher
 
 
 class TestCustomCipher(TestCase):
