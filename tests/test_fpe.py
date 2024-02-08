@@ -1,8 +1,6 @@
 from unittest import TestCase
 
-from feistel.fpe import FPECipher
-from feistel.utils.base256 import Readable, hex2Readable
-from feistel.utils.hash import BLAKE2B, SHA_256
+from feistel import FPECipher, Readable, hex2Readable, BLAKE2B, SHA_256
 
 
 class TestFPECipher(TestCase):

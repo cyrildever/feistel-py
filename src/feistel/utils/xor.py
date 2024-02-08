@@ -1,4 +1,4 @@
-from feistel.utils.bytearray import bytearray2ints
+from feistel.utils import bytearray2ints
 
 
 NEUTRAL = bytearray([0]).decode("utf-8")

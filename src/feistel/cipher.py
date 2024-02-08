@@ -1,7 +1,4 @@
-from feistel.utils.hash import hash
-from feistel.utils.padding import pad, unpad
-from feistel.utils.strings import add, extract, split, string2bytearray
-from feistel.utils.xor import xor
+from feistel.utils import add, extract, hash, pad, split, string2bytearray, unpad, xor
 
 
 class Cipher:

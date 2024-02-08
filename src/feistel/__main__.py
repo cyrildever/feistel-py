@@ -1,11 +1,16 @@
 import argparse
 import ast
-import sys
 
-from feistel.cipher import Cipher
-from feistel.custom import CustomCipher
-from feistel.fpe import Engine, FPECipher
-from feistel.utils.hash import SHA_256, is_available_engine
+
+from feistel import (
+    Cipher,
+    CustomCipher,
+    Engine,
+    FPECipher,
+    is_available_engine,
+    SHA_256,
+)
+
 
 CUSTOM = "custom"
 FEISTEL = "feistel"

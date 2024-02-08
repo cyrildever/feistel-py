@@ -1,4 +1,4 @@
-from pyutls.list import flatten
+from pyutls import flatten
 
 
 def add_bytes(b1: bytearray, b2: bytearray) -> bytearray:

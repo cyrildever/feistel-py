@@ -45,7 +45,7 @@ To get an obfuscated string from a source data using the SHA-256 hashing functio
 The decryption process uses the obfuscated buffered data and pass it to the `decrypt()` method of the `Cipher`.
 
 ```python
-from feistel.cipher import Cipher
+from feistel import Cipher
 
 
 source = "my-source-data"
@@ -63,7 +63,7 @@ _NB: This is the exact replica of my other implementations (see below)._
 
 You may also use your own set of keys through a `CustomCipher` instance, eg.
 ```python
-from feistel.custom import CustomCipher
+from feistel import CustomCipher
 
 
 keys = [
@@ -77,8 +77,7 @@ In that case, the number of rounds depends on the number of provided keys.
 
 Finally, you might want to use the latest cipher, providing true format-preserving encryption for strings:
 ```python
-from feistel.fpe import FPECipher
-from feistel.utils.hash import SHA_256
+from feistel import FPECipher, SHA_256
 
 
 cipher = FPECipher(SHA_256, "some-32-byte-long-key-to-be-safe", 128)
@@ -120,6 +119,9 @@ The following libraries are necessary:
 ### Tests
 
 ```console
+$ git clone https://github.com/cyrildever/feistel-py.git
+$ cd feistel-py/
+$ pip install -e .
 $ python3 -m unittest discover
 ```
 
