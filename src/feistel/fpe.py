@@ -74,7 +74,8 @@ class FPECipher:
             string = b.decode()
             return int.from_bytes(readable2bytearray(self.encrypt(string)), "big")
 
-        bits = 8 if math.ceil(math.log2(n) / 8) > 4 else 4
+        size = math.ceil(math.log2(n) / 8)
+        bits = 8 if size > 4 else 4 if size > 2 else size
         buf = n.to_bytes(bits, "big")
         parts = split_bytes(buf)
         # Apply the FPE Feistel cipher

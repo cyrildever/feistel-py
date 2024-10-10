@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "feistel-py"
-version = "0.2.0"
+version = "0.3.0"
 description = "Feistel cipher implementation in Python for format-preserving encryption"
 readme = "README.md"
 authors = [{ name = "Cyril Dever", email = "cdever@pep-s.com" }]

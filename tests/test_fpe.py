@@ -23,6 +23,12 @@ class TestFPECipher(TestCase):
         smallNumber = cipher.encrypt_number(123)
         self.assertEqual(smallNumber, 24359)
 
+        # Different size of numbers
+        for test in [100, 1403, 100000, 50000000]:
+            obfuscated = cipher.encrypt_number(test)
+            deciphered = cipher.decrypt_number(obfuscated)
+            self.assertEqual(deciphered, test)
+
         zero = cipher.encrypt_number(0)
         self.assertEqual(zero, 0)
 
