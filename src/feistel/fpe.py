@@ -8,15 +8,12 @@ from feistel.utils import (
     extract,
     H,
     is_available_engine,
-    NEUTRAL,
     NEUTRAL_BYTES,
     Readable,
     readable2bytearray,
-    split,
     split_bytes,
     string2bytearray,
     to_base256_readable,
-    xor,
     xor_bytes,
 )
 
@@ -44,24 +41,9 @@ class FPECipher:
         if len(data) == 0:
             return Readable("")
 
-        # Apply the FPE Feistel cipher
-        parts = split(data)
-        for i in range(0, self.rounds):
-            left = parts[1]
-            if len(parts[1]) < len(parts[0]):
-                parts[1] += NEUTRAL
-            rnd = self._round(parts[1], i)
-            tmp = parts[0]
-            crop = False
-            if len(tmp) + 1 == len(rnd):
-                tmp += NEUTRAL
-                crop = True
-            right = xor(tmp, rnd)
-            if crop:
-                right = right[: len(right) - 1]
-            parts = [left, right]
+        b = self.encrypt_bytes(bytearray(data, "utf-8"))
 
-        return to_base256_readable(string2bytearray("".join(parts)))
+        return to_base256_readable(b)
 
     def encrypt_number(self, n: int) -> int:
         """
@@ -77,14 +59,32 @@ class FPECipher:
         size = math.ceil(math.log2(n) / 8)
         bits = 8 if size > 4 else 4 if size > 2 else size
         buf = n.to_bytes(bits, "big")
-        parts = split_bytes(buf)
+
+        b = self.encrypt_bytes(bytearray(buf))
+
+        return int.from_bytes(b, "big")
+
+    def encrypt_string(self, string: str) -> Readable:
+        """
+        Obfuscate strings
+        """
+        return self.encrypt(string)
+
+    def encrypt_bytes(self, bytes: bytearray) -> bytearray:
+        """
+        Obfuscate bytes
+
+        NB: The returned byte array should be made readable if need be
+        """
+        parts = split_bytes(bytes)
+
         # Apply the FPE Feistel cipher
         for i in range(0, self.rounds):
-            left = parts[1]
+            left = parts[1].copy()
             if len(parts[1]) < len(parts[0]):
                 parts[1].extend(NEUTRAL_BYTES)
             rnd = self._round_bytes(parts[1], i)
-            tmp = parts[0]
+            tmp = parts[0].copy()
             crop = False
             if len(tmp) + 1 == len(rnd):
                 tmp.extend(NEUTRAL_BYTES)
@@ -94,14 +94,7 @@ class FPECipher:
                 right = right[: len(right) - 1]
             parts = [left, right]
 
-        b = parts[0] + parts[1]
-        return int.from_bytes(b, "big")
-
-    def encrypt_string(self, string: str) -> Readable:
-        """
-        Obfuscate strings
-        """
-        return self.encrypt(string)
+        return parts[0] + parts[1]
 
     def decrypt(self, obfuscated: Readable) -> str:
         """
@@ -110,29 +103,9 @@ class FPECipher:
         if len(obfuscated) == 0:
             return ""
 
-        # Apply the FPE Feistel cipher
-        left, right = split(readable2bytearray(obfuscated).decode("utf-8"))
-        if self.rounds % 2 != 0 and len(left) != len(right):
-            left += right[:1]
-            right = right[1:]
+        b = self.decrypt_bytes(readable2bytearray(obfuscated))
 
-        for i in range(0, self.rounds):
-            leftRound = left
-            if len(left) < len(right):
-                leftRound += NEUTRAL
-            rnd = self._round(leftRound, self.rounds - i - 1)
-            rightRound = right
-            extended = False
-            if len(rightRound) + 1 == len(rnd):
-                rightRound += left[len(left) - 1 :]
-                extended = True
-            tmp = xor(rightRound, rnd)
-            right = left
-            if extended:
-                tmp = tmp[0 : len(tmp) - 1]
-            left = tmp
-
-        return left + right
+        return b.decode("utf-8")
 
     def decrypt_number(self, obfuscated: int) -> int:
         """
@@ -148,29 +121,38 @@ class FPECipher:
         else:
             buf = obfuscated.to_bytes(2, "big")
 
+        b = self.decrypt_bytes(bytearray(buf))
+
+        return int.from_bytes(b, "big")
+
+    def decrypt_bytes(self, bytes: bytearray) -> bytearray:
+        """
+        Deobufscate bytes
+        """
         # Apply FPE Feistel cipher
-        left, right = split_bytes(buf)
+        left, right = split_bytes(bytes)
         if self.rounds % 2 != 0 and len(left) != len(right):
             left.extend([right[0]])
-            right = right[1:]
+            right = right[1:].copy()
         for i in range(0, self.rounds):
-            leftRound = left
+            leftRound = left.copy()
             if len(left) < len(right):
                 leftRound.extend(NEUTRAL_BYTES)
             rnd = self._round_bytes(leftRound, self.rounds - i - 1)
-            rightRound = right
+            rightRound = right.copy()
             extended = False
             if len(rightRound) + 1 == len(rnd):
-                rightRound.extend(left[len(left) - 1])
+                rightRound.extend([left[len(left) - 1]])
+                extended = True
+            if i == self.rounds - 1 and rightRound[len(rightRound) - 1] == 0:
                 extended = True
             tmp = xor_bytes(rightRound, rnd)
-            right = left
+            right = left.copy()
             if extended:
                 tmp = tmp[: len(tmp) - 1]
-            left = tmp
+            left = tmp.copy()
 
-        b = left + right
-        return int.from_bytes(b, "big")
+        return left + right
 
     def _round(self, item: str, idx: int) -> str:
         addition = add(item, extract(self.key, idx, len(item)))
