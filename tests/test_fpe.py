@@ -77,3 +77,22 @@ class TestFPECipher(TestCase):
 
         veryLargeNumber = cipher.decrypt_number(17630367666640955566)
         self.assertEqual(veryLargeNumber, 18446744073709551615)
+
+    def test_test(self):
+        # input = "maxime barbé"
+        # cipher = FPECipher(SHA_256, "", 10)
+        # output = cipher.encrypt(input)
+        # self.assertEqual(output, "")
+        input = "Edgewhere"
+        # expected = Readable("C$¡r/3'{8¢")
+        expected = Readable("K¡(#q|r5*")
+        cipher = FPECipher(
+            SHA_256,
+            "8ed9dcc1701c064f0fd7ae235f15143f989920e0ee9658bb7882c8d7d5f05692",
+            10,
+        )
+        obfuscated = cipher.encrypt(input)
+        self.assertEqual(obfuscated, expected)
+
+        deobfuscated = cipher.decrypt(obfuscated)
+        self.assertEqual(deobfuscated, input)
