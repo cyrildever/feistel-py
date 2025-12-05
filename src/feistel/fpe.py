@@ -45,31 +45,6 @@ class FPECipher:
 
         return to_base256_readable(b)
 
-    def encrypt_number(self, n: int) -> int:
-        """
-        Obfuscate numbers
-        """
-        if n < 128:
-            if n == 0:
-                return 0
-            b = n.to_bytes(2, "big")
-            string = b.decode()
-            return int.from_bytes(readable2bytearray(self.encrypt(string)), "big")
-
-        size = math.ceil(math.log2(n) / 8)
-        bits = 8 if size > 4 else 4 if size > 2 else size
-        buf = n.to_bytes(bits, "big")
-
-        b = self.encrypt_bytes(bytearray(buf))
-
-        return int.from_bytes(b, "big")
-
-    def encrypt_string(self, string: str) -> Readable:
-        """
-        Obfuscate strings
-        """
-        return self.encrypt(string)
-
     def encrypt_bytes(self, bytes: bytearray) -> bytearray:
         """
         Obfuscate bytes
@@ -96,6 +71,38 @@ class FPECipher:
 
         return parts[0] + parts[1]
 
+    def encrypt_number(self, n: int) -> int:
+        """
+        Obfuscate numbers
+        """
+        if n < 128:
+            if n == 0:
+                return 0
+            b = n.to_bytes(2, "big")
+            string = b.decode()
+            return int.from_bytes(readable2bytearray(self.encrypt(string)), "big")
+
+        size = math.ceil(math.log2(n) / 8)
+        bits = 8 if size > 4 else 4 if size > 2 else size
+        buf = n.to_bytes(bits, "big")
+
+        b = self.encrypt_bytes(bytearray(buf))
+
+        return int.from_bytes(b, "big")
+
+    def encrypt_number_as_string(self, n: str) -> str:
+        """
+        Obfuscate numbers passed and returned as string to maintain the number of characters
+        """
+        obfuscated = self.encrypt_number(int(n))
+        return str(obfuscated).zfill(len(n))
+
+    def encrypt_string(self, string: str) -> Readable:
+        """
+        Obfuscate strings
+        """
+        return self.encrypt(string)
+
     def decrypt(self, obfuscated: Readable) -> str:
         """
         Deobfuscate the passed data
@@ -107,27 +114,11 @@ class FPECipher:
 
         return b.decode("utf-8")
 
-    def decrypt_number(self, obfuscated: int) -> int:
-        """
-        Deobfuscate numbers
-        """
-        if obfuscated == 0:
-            return 0
-        size = math.ceil(math.log2(obfuscated) / 8)
-        if size > 4:
-            buf = obfuscated.to_bytes(8, "big")
-        elif size > 2:
-            buf = obfuscated.to_bytes(4, "big")
-        else:
-            buf = obfuscated.to_bytes(2, "big")
-
-        b = self.decrypt_bytes(bytearray(buf))
-
-        return int.from_bytes(b, "big")
-
     def decrypt_bytes(self, bytes: bytearray) -> bytearray:
         """
         Deobufscate bytes
+
+        NB: The returned byte array should be cast into a UTF-8 string or an integer if need be
         """
         # Apply FPE Feistel cipher
         left, right = split_bytes(bytes)
@@ -153,6 +144,39 @@ class FPECipher:
             left = tmp.copy()
 
         return left + right
+
+    def decrypt_number(self, obfuscated: int) -> int:
+        """
+        Deobfuscate numbers
+        """
+        if obfuscated == 0:
+            return 0
+        size = math.ceil(math.log2(obfuscated) / 8)
+        if size > 4:
+            buf = obfuscated.to_bytes(8, "big")
+        elif size > 2:
+            buf = obfuscated.to_bytes(4, "big")
+        else:
+            buf = obfuscated.to_bytes(2, "big")
+
+        b = self.decrypt_bytes(bytearray(buf))
+
+        return int.from_bytes(b, "big")
+
+    def decrypt_number_as_string(self, n: str) -> str:
+        """
+        Deobfuscate numbers passed and returned as string to maintain the number of characters
+        """
+        deobfuscated = self.decrypt_number(int(n))
+        return str(deobfuscated).zfill(len(n))
+
+    def decrypt_string(self, obfuscated: str) -> str:
+        """
+        Deobfuscate strings
+        """
+        return self.decrypt(Readable(obfuscated))
+
+    # private methods
 
     def _round(self, item: str, idx: int) -> str:
         addition = add(item, extract(self.key, idx, len(item)))
