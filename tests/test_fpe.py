@@ -77,3 +77,25 @@ class TestFPECipher(TestCase):
 
         veryLargeNumber = cipher.decrypt_number(17630367666640955566)
         self.assertEqual(veryLargeNumber, 18446744073709551615)
+
+    def test_decrypt_string(self):
+        expected = "Edgewhere"
+        input = "K¡(#q|r5*"
+        cipher = FPECipher(
+            SHA_256,
+            "8ed9dcc1701c064f0fd7ae235f15143f989920e0ee9658bb7882c8d7d5f05692",
+            10,
+        )
+        deobfuscated = cipher.decrypt_string(input)
+        self.assertEqual(deobfuscated, expected)
+        self.assertTrue(len(deobfuscated) == len(input))
+
+    def test_number_as_string(self):
+        input = "00123"
+        output = "24359"
+        cipher = FPECipher(SHA_256, "some-32-byte-long-key-to-be-safe", 128)
+        obfuscated = cipher.encrypt_number_as_string(input)
+        self.assertEqual(obfuscated, output)
+
+        deobfuscated = cipher.decrypt_number_as_string(output)
+        self.assertEqual(deobfuscated, input)

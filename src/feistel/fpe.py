@@ -8,15 +8,12 @@ from feistel.utils import (
     extract,
     H,
     is_available_engine,
-    NEUTRAL,
     NEUTRAL_BYTES,
     Readable,
     readable2bytearray,
-    split,
     split_bytes,
     string2bytearray,
     to_base256_readable,
-    xor,
     xor_bytes,
 )
 
@@ -44,24 +41,35 @@ class FPECipher:
         if len(data) == 0:
             return Readable("")
 
+        b = self.encrypt_bytes(bytearray(data, "utf-8"))
+
+        return to_base256_readable(b)
+
+    def encrypt_bytes(self, bytes: bytearray) -> bytearray:
+        """
+        Obfuscate bytes
+
+        NB: The returned byte array should be made readable if need be
+        """
+        parts = split_bytes(bytes)
+
         # Apply the FPE Feistel cipher
-        parts = split(data)
         for i in range(0, self.rounds):
-            left = parts[1]
+            left = parts[1].copy()
             if len(parts[1]) < len(parts[0]):
-                parts[1] += NEUTRAL
-            rnd = self._round(parts[1], i)
-            tmp = parts[0]
+                parts[1].extend(NEUTRAL_BYTES)
+            rnd = self._round_bytes(parts[1], i)
+            tmp = parts[0].copy()
             crop = False
             if len(tmp) + 1 == len(rnd):
-                tmp += NEUTRAL
+                tmp.extend(NEUTRAL_BYTES)
                 crop = True
-            right = xor(tmp, rnd)
+            right = xor_bytes(tmp, rnd)
             if crop:
                 right = right[: len(right) - 1]
             parts = [left, right]
 
-        return to_base256_readable(string2bytearray("".join(parts)))
+        return parts[0] + parts[1]
 
     def encrypt_number(self, n: int) -> int:
         """
@@ -77,25 +85,17 @@ class FPECipher:
         size = math.ceil(math.log2(n) / 8)
         bits = 8 if size > 4 else 4 if size > 2 else size
         buf = n.to_bytes(bits, "big")
-        parts = split_bytes(buf)
-        # Apply the FPE Feistel cipher
-        for i in range(0, self.rounds):
-            left = parts[1]
-            if len(parts[1]) < len(parts[0]):
-                parts[1].extend(NEUTRAL_BYTES)
-            rnd = self._round_bytes(parts[1], i)
-            tmp = parts[0]
-            crop = False
-            if len(tmp) + 1 == len(rnd):
-                tmp.extend(NEUTRAL_BYTES)
-                crop = True
-            right = xor_bytes(tmp, rnd)
-            if crop:
-                right = right[: len(right) - 1]
-            parts = [left, right]
 
-        b = parts[0] + parts[1]
+        b = self.encrypt_bytes(bytearray(buf))
+
         return int.from_bytes(b, "big")
+
+    def encrypt_number_as_string(self, n: str) -> str:
+        """
+        Obfuscate numbers passed and returned as string to maintain the number of characters
+        """
+        obfuscated = self.encrypt_number(int(n))
+        return str(obfuscated).zfill(len(n))
 
     def encrypt_string(self, string: str) -> Readable:
         """
@@ -110,27 +110,38 @@ class FPECipher:
         if len(obfuscated) == 0:
             return ""
 
-        # Apply the FPE Feistel cipher
-        left, right = split(readable2bytearray(obfuscated).decode("utf-8"))
-        if self.rounds % 2 != 0 and len(left) != len(right):
-            left += right[:1]
-            right = right[1:]
+        b = self.decrypt_bytes(readable2bytearray(obfuscated))
 
+        return b.decode("utf-8")
+
+    def decrypt_bytes(self, bytes: bytearray) -> bytearray:
+        """
+        Deobufscate bytes
+
+        NB: The returned byte array should be cast into a UTF-8 string or an integer if need be
+        """
+        # Apply FPE Feistel cipher
+        left, right = split_bytes(bytes)
+        if self.rounds % 2 != 0 and len(left) != len(right):
+            left.extend([right[0]])
+            right = right[1:].copy()
         for i in range(0, self.rounds):
-            leftRound = left
+            leftRound = left.copy()
             if len(left) < len(right):
-                leftRound += NEUTRAL
-            rnd = self._round(leftRound, self.rounds - i - 1)
-            rightRound = right
+                leftRound.extend(NEUTRAL_BYTES)
+            rnd = self._round_bytes(leftRound, self.rounds - i - 1)
+            rightRound = right.copy()
             extended = False
             if len(rightRound) + 1 == len(rnd):
-                rightRound += left[len(left) - 1 :]
+                rightRound.extend([left[len(left) - 1]])
                 extended = True
-            tmp = xor(rightRound, rnd)
-            right = left
+            if i == self.rounds - 1 and rightRound[len(rightRound) - 1] == 0:
+                extended = True
+            tmp = xor_bytes(rightRound, rnd)
+            right = left.copy()
             if extended:
-                tmp = tmp[0 : len(tmp) - 1]
-            left = tmp
+                tmp = tmp[: len(tmp) - 1]
+            left = tmp.copy()
 
         return left + right
 
@@ -148,29 +159,24 @@ class FPECipher:
         else:
             buf = obfuscated.to_bytes(2, "big")
 
-        # Apply FPE Feistel cipher
-        left, right = split_bytes(buf)
-        if self.rounds % 2 != 0 and len(left) != len(right):
-            left.extend([right[0]])
-            right = right[1:]
-        for i in range(0, self.rounds):
-            leftRound = left
-            if len(left) < len(right):
-                leftRound.extend(NEUTRAL_BYTES)
-            rnd = self._round_bytes(leftRound, self.rounds - i - 1)
-            rightRound = right
-            extended = False
-            if len(rightRound) + 1 == len(rnd):
-                rightRound.extend(left[len(left) - 1])
-                extended = True
-            tmp = xor_bytes(rightRound, rnd)
-            right = left
-            if extended:
-                tmp = tmp[: len(tmp) - 1]
-            left = tmp
+        b = self.decrypt_bytes(bytearray(buf))
 
-        b = left + right
         return int.from_bytes(b, "big")
+
+    def decrypt_number_as_string(self, n: str) -> str:
+        """
+        Deobfuscate numbers passed and returned as string to maintain the number of characters
+        """
+        deobfuscated = self.decrypt_number(int(n))
+        return str(deobfuscated).zfill(len(n))
+
+    def decrypt_string(self, obfuscated: str) -> str:
+        """
+        Deobfuscate strings
+        """
+        return self.decrypt(Readable(obfuscated))
+
+    # private methods
 
     def _round(self, item: str, idx: int) -> str:
         addition = add(item, extract(self.key, idx, len(item)))
