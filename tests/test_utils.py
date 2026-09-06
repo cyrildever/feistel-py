@@ -4,6 +4,7 @@ from unittest import TestCase
 from feistel.utils import (
     add,
     base256_char_at,
+    CHARSET,
     BLAKE2B,
     extract,
     H,
@@ -24,6 +25,10 @@ from feistel.utils import (
 
 class TestUtilsBase259(TestCase):
     def test_base256(self):
+        # One character per byte value, no duplicate: `index_of_base256()` must be the exact
+        # inverse of `base256_char_at()` (see the Golang and Scala implementations)
+        self.assertEqual(len(CHARSET), 256)
+        self.assertEqual(len(set(CHARSET)), 256)
         self.assertEqual(base256_char_at(0), "!")
         self.assertEqual(base256_char_at(255), "ǿ")
         self.assertEqual(index_of_base256("ǿ"), 255)

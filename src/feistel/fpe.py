@@ -135,8 +135,6 @@ class FPECipher:
             if len(rightRound) + 1 == len(rnd):
                 rightRound.extend([left[len(left) - 1]])
                 extended = True
-            if i == self.rounds - 1 and rightRound[len(rightRound) - 1] == 0:
-                extended = True
             tmp = xor_bytes(rightRound, rnd)
             right = left.copy()
             if extended:

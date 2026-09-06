@@ -136,6 +136,11 @@ For those interested, I also made two other implementations of these ciphers:
 I also created a special library for redacting classified documents using the new FPE cipher. Feel free to [contact me](mailto:cdever@edgewhere.fr) about it.
 
 
+### Changelog
+
+* `1.0.2`: fixes a lossy `FPECipher.decrypt()` that dropped the last character of the deciphered data whenever the final Feistel round ended on a null byte (around 1% of the key/data couples, and only for data whose UTF-8 length is even -- an odd length always ends its last round on the shape where the crop is legitimate). Ciphering is unchanged, and deciphering is unchanged for every data that v1.0.1 already handled correctly: data encrypted with an earlier version stays decipherable without re-encryption.
+
+
 ### License
 
 This module is distributed under a MIT license. \
